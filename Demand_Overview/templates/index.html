@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Processor App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            position: relative; /* Position the header to allow absolute positioning of the title */
+            background-color: #333333;
+            height: 100px;
+            padding: 0 20px; /* Add some padding for spacing */
+        }
+
+        .logo {
+            height: 60px; /* Adjust size of the logo */
+            padding: 20px;
+        }
+
+        .app-title {
+            position: absolute; /* Position the title absolutely */
+            left: 50%; /* Horizontally center the title */
+            transform: translateX(-50%); /* Adjust for true centering */
+            color: white;
+            font-size: 24px;
+            margin: 0;
+            white-space: nowrap; /* Prevent the title from wrapping to a new line */
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        .spinner {
+            display: none;
+            margin: 20px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .response {
+            margin-top: 20px;
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Company Logo" class="logo">
+        <h1 class="app-title">Demand Overview</h1>
+    </div>
+
+    <div class="container">
+        <h2>Upload and Process Your File</h2>
+        <form id="uploadForm">
+            <input type="file" id="fileInput" accept=".xlsx" required>
+            <br>
+            <button id="uploadButton" type="submit" disabled>Upload</button>
+        </form>
+        <h1 id="loadingText" style="display: none;">Analyzing...</h1>
+        <div class="spinner" id="loadingSpinner"></div>
+
+        <div id="response" class="response">
+        </div>
+        <div id="error" class="error"></div>
+        <a id="templateLink" href="#" style="display: none;"></a>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const uploadButton = document.getElementById('uploadButton');
+        const spinner = document.getElementById('loadingSpinner');
+        const responseDiv = document.getElementById('response');
+        const errorDiv = document.getElementById('error');
+        const templateLink = document.getElementById('templateLink');
+        const loadingText = document.getElementById('loadingText');
+        // Enable the button when a file is selected
+        fileInput.addEventListener('change', () => {
+            uploadButton.disabled = !fileInput.files.length;
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent form submission
+
+            // Clear any previous messages
+            responseDiv.textContent = '';
+            errorDiv.textContent = '';
+
+            const file = fileInput.files[0];
+            if (!file) {
+                errorDiv.textContent = 'Please select a file before uploading.';
+                return;
+            }
+
+            // Show spinner and disable the button while processing
+            spinner.style.display = 'block';
+            loadingText.style.display = 'block';
+            uploadButton.disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // Send the file to the backend
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    responseDiv.textContent = result.message;
+                    if (result.template_link) {
+                        templateLink.href = result.template_link;
+                        templateLink.style.display = 'inline';
+                        templateLink.textContent = 'Download Template';
+                    }
+                    // Trigger automatic download if a file URL is provided
+                    if (result.file_url) {
+                        const link = document.createElement('a');
+                        link.href = result.file_url;
+                        link.download = result.file_name || 'processed_file.xlsx';
+                        link.click();
+                    }
+                } else {
+                    errorDiv.textContent = `Error: ${result.error}`;
+                }
+            } catch (err) {
+                errorDiv.textContent = `An error occurred: ${err.message}`;
+            } finally {
+                // Hide spinner and re-enable the button
+                spinner.style.display = 'none';
+                loadingText.style.display = 'none';
+                uploadButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

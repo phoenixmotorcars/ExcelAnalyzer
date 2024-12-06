@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / compiled Python files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.env/
+*.env
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Flask-specific
+instance/
+*.sqlite3
+*.db
+*.bak
+
+# Uploaded files
+uploads/
+temp/
+
+# Static and generated files
+static/
+!static/template.xlsx  # Keep the template file if needed
+*.css.map
+*.js.map
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# Test-related
+.coverage
+htmlcov/
+pytest_cache/
+
+# Configuration files
+*.config.json
+*.ini
+*.yaml
+
+# Deployment files
+*.pem
+*.crt
+*.key
