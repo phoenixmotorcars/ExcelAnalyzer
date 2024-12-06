@@ -26,8 +26,6 @@ uploads/
 temp/
 
 # Static and generated files
-static/
-!static/template.xlsx  # Keep the template file if needed
 *.css.map
 *.js.map
 
